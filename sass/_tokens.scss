@@ -1,0 +1,69 @@
+@use "sass:map";
+
+// ==========================================================
+// 下層ページ用のトークン（sass/style.scss の Foundation と同じ値）
+// style.scss は承認済みトップの成果物のため、下層の追加スタイルは lower.scss に分ける。
+// 値を変えるときは style.scss と両方を同時に直す。
+// ==========================================================
+
+// Colors（Figma変数 + 制作前チェック No.13・14）
+$color-main: #023e78; // Figma color-main
+$color-main-dark: #002a52; // ルールセット「メインカラー(濃)」ホバー時
+$color-accent: #fff400; // Figma color-accent-1
+$color-required: #e61264; // Figma color-accent-2（必須バッジ）
+$color-bg: #ffffff; // Figma color-base
+$color-bg-sub: #edf3f8; // Figma color-main-light
+$color-bg-dark: #1a1a1a; // フッター下段
+$color-text: #1a1a1a; // Figma color-contrast
+$color-text-sub: #707070; // Figma #888 を No.14 で濃く（白地 4.95:1）
+$color-text-inverse: #ffffff;
+$color-border: #dddddd; // No.13 でグレーを統一
+$color-overlay-dark: rgba(26, 26, 26, 0.2); // 下層MV画像の暗幕
+$color-cta-download: rgba(0, 87, 172, 0.8); // フッターCTA DOWNLOAD（No.13 でPC値に統一）
+$color-cta-contact: rgba(2, 62, 120, 0.8); // フッターCTA CONTACT
+$color-shadow: rgba(0, 0, 0, 0.16); // カードの影
+$color-overlay-main: rgba(2, 62, 120, 0.8); // 建物写真に重ねる main 80%（SPのABOUT）
+$color-bg-main-tint: #1f5080; // 建物写真＋main80% の平均色（PCのABOUT箱・導入事例の背景。元画像の解像度不足のため塗りに変更）
+
+// 下層専用（サービス）
+$color-bg-card: rgba(255, 255, 255, 0.9); // サービスの研修カード（白90%）
+$color-flow-1: #edf3f8; // 導入の流れ STEP01（= color-main-light）
+$color-flow-2: #dde8f0; // STEP02
+$color-flow-3: #c7dbe9; // STEP03
+$color-flow-4: #b0d0e5; // STEP04
+
+// Fonts
+$font-primary: "Noto Sans JP", sans-serif;
+$font-en: "Fira Sans", sans-serif;
+$fw-normal: 400;
+$fw-medium: 500;
+$fw-bold: 700;
+
+// Layout
+$inner: 1100px; // コンテンツ幅
+$padding-pc: 90px; // カンプ（1280px）の左右余白
+$padding-pc-min: 40px; // 1180px付近まで縮める下限（No.16）
+$padding-sp: 20px;
+$lower-padding-top-pc: 70px; // Figma変数 スペース/lower-padding-top-pc（下層コンテンツの上余白）
+
+// Breakpoints（768px以下SP・769px以上PC＝制作前チェック No.16）
+$breakpoints: (
+  md: 769,
+  lg: 1180,
+  xl: 1200, // ヘッダーがカンプどおり1行に収まる幅（279+478+30+362+32=1,181）
+  cols3: 970, // 352幅カードが3列に並ぶ幅（(W − 80 + 32 − 76) ÷ 3 ≥ 282）
+  flow4: 1024, // 下層: 導入の流れを4列に並べる幅（1列 約236以上）
+  cols2: 1024, // 下層: 導入事例カードを2列に並べる幅（会社名の欄 約190以上）
+);
+
+@mixin mq-up($size: md) {
+  @media screen and (min-width: #{map.get($breakpoints, $size)}px) {
+    @content;
+  }
+}
+
+@mixin mq-down($size) {
+  @media not all and (min-width: #{map.get($breakpoints, $size)}px) {
+    @content;
+  }
+}

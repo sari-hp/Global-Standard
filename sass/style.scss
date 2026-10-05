@@ -1,0 +1,1823 @@
+@charset "utf-8";
+@use "sass:map";
+
+// ==========================================================
+// Global Standard - style.scss（FLOCSS + BEM / 単一）
+// ==========================================================
+
+// ----------------------------------------------------------
+// Foundation: 変数・mixin
+// ----------------------------------------------------------
+
+// Colors（Figma変数 + 制作前チェック No.13・14）
+$color-main: #023e78; // Figma color-main
+$color-main-dark: #002a52; // ルールセット「メインカラー(濃)」ホバー時
+$color-accent: #fff400; // Figma color-accent-1
+$color-required: #e61264; // Figma color-accent-2（必須バッジ）
+$color-bg: #ffffff; // Figma color-base
+$color-bg-sub: #edf3f8; // Figma color-main-light
+$color-bg-dark: #1a1a1a; // フッター下段
+$color-text: #1a1a1a; // Figma color-contrast
+$color-text-sub: #707070; // Figma #888 を No.14 で濃く（白地 4.95:1）
+$color-text-inverse: #ffffff;
+$color-border: #dddddd; // No.13 でグレーを統一
+$color-overlay-dark: rgba(26, 26, 26, 0.2); // 下層MV画像の暗幕
+$color-cta-download: rgba(0, 87, 172, 0.8); // フッターCTA DOWNLOAD（No.13 でPC値に統一）
+$color-cta-contact: rgba(2, 62, 120, 0.8); // フッターCTA CONTACT
+$color-shadow: rgba(0, 0, 0, 0.16); // カードの影
+$color-overlay-main: rgba(2, 62, 120, 0.8); // 建物写真に重ねる main 80%（SPのABOUT）
+$color-bg-main-tint: #1f5080; // 建物写真＋main80% の平均色（PCのABOUT箱・導入事例の背景。元画像の解像度不足のため塗りに変更）
+
+// Fonts
+$font-primary: "Noto Sans JP", sans-serif;
+$font-en: "Fira Sans", sans-serif;
+$fw-normal: 400;
+$fw-medium: 500;
+$fw-bold: 700;
+
+// Layout
+$inner: 1100px; // コンテンツ幅
+$padding-pc: 90px; // カンプ（1280px）の左右余白
+$padding-pc-min: 40px; // 1180px付近まで縮める下限（No.16）
+$padding-sp: 20px;
+
+// Breakpoints（768px以下SP・769px以上PC＝制作前チェック No.16）
+$breakpoints: (
+  md: 769,
+  lg: 1180,
+  xl: 1200, // ヘッダーがカンプどおり1行に収まる幅（279+478+30+362+32=1,181）
+  cols3: 970, // 352幅カードが3列に並ぶ幅（(W − 80 + 32 − 76) ÷ 3 ≥ 282）
+);
+
+@mixin mq-up($size: md) {
+  @media screen and (min-width: #{map.get($breakpoints, $size)}px) {
+    @content;
+  }
+}
+
+@mixin mq-down($size) {
+  @media not all and (min-width: #{map.get($breakpoints, $size)}px) {
+    @content;
+  }
+}
+
+// ----------------------------------------------------------
+// Foundation: CSS変数（:root。JS・下層からの参照用）
+// ----------------------------------------------------------
+:root {
+  --color-main: #{$color-main};
+  --color-main-dark: #{$color-main-dark};
+  --color-accent: #{$color-accent};
+  --color-required: #{$color-required};
+  --color-bg: #{$color-bg};
+  --color-bg-sub: #{$color-bg-sub};
+  --color-bg-dark: #{$color-bg-dark};
+  --color-text: #{$color-text};
+  --color-text-sub: #{$color-text-sub};
+  --color-text-inverse: #{$color-text-inverse};
+  --color-border: #{$color-border};
+  --color-overlay-dark: #{$color-overlay-dark};
+  --color-cta-download: #{$color-cta-download};
+  --color-cta-contact: #{$color-cta-contact};
+  --color-overlay-main: #{$color-overlay-main};
+  --color-bg-main-tint: #{$color-bg-main-tint};
+  --color-shadow: #{$color-shadow};
+  --font-primary: #{$font-primary};
+  --font-en: #{$font-en};
+  --fw-normal: #{$fw-normal};
+  --fw-medium: #{$fw-medium};
+  --fw-bold: #{$fw-bold};
+}
+
+// ----------------------------------------------------------
+// Foundation: リセットCSS（テンプレート無しのため全文出力）
+// ----------------------------------------------------------
+
+/* ボックスモデル */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* マージンリセット */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, figure, blockquote, dl, dd {
+  margin: 0;
+  padding: 0;
+}
+
+/* テーブルセルのUA既定padding(1px)を除去（SPの積み上げレイアウトで1セルあたり+2pxの高さ誤差になる） */
+th, td {
+  padding: 0;
+}
+
+/* スマホタップ時のOS既定ハイライト（灰色のちらつき）を無効化 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* HTML基本設定 */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* body基本設定 */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* リスト */
+ul, ol {
+  list-style: none;
+}
+
+/* 画像・メディア */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 見出し・段落
+   overflow-wrap は残す（URL・長い英単語・型番が「1語で行に収まらない時だけ」割る＝はみ出し防止）。
+   text-wrap の balance / pretty は一律では入れない:
+   - pretty は英文の孤立行対策。効かせるため前の行から文字を引き戻すので、和文では前の行が短くなり右側に余白が空く
+   - balance は行長を揃えるため意図的に行を短くする→カンプの改行と食い違う
+   - どちらも Firefox 未対応（2026-07時点）でブラウザ間の改行位置が変わる
+   使いたい箇所だけ .u-balance / .u-pretty で個別に付ける */
+h1, h2, h3, h4, h5, h6,
+p {
+  overflow-wrap: break-word;
+}
+
+/* リンク */
+a {
+  text-decoration: none;
+}
+
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+}
+
+/* フォーム */
+input, button, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input[type="submit"],
+input[type="button"],
+label, button, select {
+  cursor: pointer;
+}
+
+/* アクセシビリティ配慮 */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+    interpolate-size: allow-keywords;
+  }
+}
+
+// ----------------------------------------------------------
+// Foundation: base
+// ----------------------------------------------------------
+body {
+  font-family: $font-primary;
+  font-size: 14px;
+  font-weight: $fw-normal;
+  color: $color-text;
+  line-height: 1.7;
+  background-color: $color-bg;
+  text-spacing-trim: space-all; // Figmaは連続約物を詰めない
+  line-break: strict; // Figmaの禁則と同じ
+}
+
+a {
+  color: inherit;
+}
+
+a[href^="tel:"] {
+  @include mq-up(md) {
+    pointer-events: none;
+  }
+}
+
+// ----------------------------------------------------------
+// Layout: inner
+// ----------------------------------------------------------
+.l-inner {
+  max-width: $inner + $padding-pc * 2;
+  margin-inline: auto;
+  padding-inline: $padding-sp;
+
+  @include mq-up(md) {
+    // 1280px で 90px、1180px付近で 40px まで縮める（No.16）
+    padding-inline: clamp(#{$padding-pc-min}, calc((100vw - #{$inner}) / 2), #{$padding-pc});
+  }
+}
+
+// ----------------------------------------------------------
+// Utility
+// ----------------------------------------------------------
+.u-pc-only {
+  display: none;
+
+  @include mq-up(md) {
+    display: block;
+  }
+}
+
+.u-sp-only {
+  display: block;
+
+  @include mq-up(md) {
+    display: none;
+  }
+}
+
+.u-phrase {
+  display: inline-block;
+
+  @include mq-up(md) {
+    display: inline;
+  }
+}
+
+.u-nowrap {
+  white-space: nowrap;
+}
+
+// スクロールで表示（制作前チェック No.18）。JS が is-reveal を付けた要素だけ隠し、画面に入ったら is-visible で表示
+.is-reveal {
+  opacity: 0;
+  translate: 0 30px; /* 下から少し浮き上がる */
+  transition: opacity 0.6s ease, translate 0.6s ease; /* 0.6秒ほど */
+}
+
+.is-reveal.is-visible {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.u-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ========================================
+  Header
+======================================== */
+// 仕様書: artifacts/spec/header.md
+// SP（〜768）: ハンバーガー / PC（769〜1199）: 1行のまま間隔・ロゴ・ボタンを縮める / PC（1200〜）: カンプ値
+.l-header {
+  position: relative;
+  z-index: 100;
+  background-color: $color-bg;
+}
+
+.l-header__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px; /* 仕様書: SPヘッダー高 60 */
+  padding-inline: 20px 11.5px; /* 右: ボタン44px内でアイコン右端355 → 20 − (44 − 27) ÷ 2 */
+
+  @include mq-up(md) {
+    height: 100px; /* 仕様書: PCヘッダー高 100 */
+    padding: 16px; /* 仕様書: PC padding 16 */
+  }
+}
+
+.l-header__logo {
+  flex-shrink: 0;
+  font-size: 0;
+  line-height: 1;
+}
+
+.l-header__logo-link {
+  display: block;
+  margin-left: 1px; /* 仕様書: SPインク x21 − padding20 */
+  padding-block: 11px; /* タップ領域 22＋11×2＝44（縦中央のため位置は変わらない） */
+
+  @include mq-up(md) {
+    margin-top: -3px; /* 仕様書: PCインク y33（中央なら34.5）→ −1.5 ×2 */
+    margin-left: 2px; /* 仕様書: PCインク x18 − padding16 */
+    padding-block: 6.5px; /* クリック領域 31＋6.5×2＝44 */
+  }
+}
+
+.l-header__logo-img {
+  width: 197px; /* 仕様書: SPインク幅 197（28px＋字間0.14px） */
+  height: auto;
+
+  @include mq-up(md) {
+    width: clamp(130px, calc(130px + (100vw - 769px) * 0.3457), 279px); /* 中間幅: 769で130 → 1200で279（(279−130)÷431） */
+  }
+}
+
+.l-header__logo-link:focus-visible {
+  outline: 2px solid $color-main;
+  outline-offset: 2px;
+}
+
+.l-header__toggle {
+  display: block;
+  width: 44px; /* タップ領域44×44。アイコン27×18はその中央 */
+  height: 44px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+
+  @include mq-up(md) {
+    display: none;
+  }
+
+  &::before {
+    content: "";
+    display: block;
+    width: 27px;
+    height: 18px;
+    margin-inline: auto;
+    background-color: $color-main;
+    mask-image: url("../images/common/icon-menu.svg");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+  }
+
+  &.is-open::before {
+    height: 22px; /* 仕様書: ×アイコン 27×22 */
+    mask-image: url("../images/common/icon-close.svg");
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-main;
+    outline-offset: -2px;
+  }
+}
+
+.l-header__menu {
+  position: fixed;
+  top: 60px; /* 仕様書: SPメニュー top60 */
+  left: 0;
+  z-index: 110;
+  visibility: hidden;
+  opacity: 0;
+  width: 100%;
+  height: calc(100dvh - 60px);
+  padding-top: 49.5px; /* 仕様書: SPメニュー padding-top 60 − リンク上余白10.5 */
+  padding-bottom: 60px; /* 仕様書: SPメニュー padding 60/40 */
+  padding-inline: 40px;
+  overflow-y: auto;
+  background-color: $color-main;
+  transition: opacity 0.3s, visibility 0.3s;
+
+  @include mq-up(md) {
+    position: static;
+    display: flex;
+    align-items: center;
+    visibility: visible;
+    opacity: 1;
+    width: auto;
+    height: auto;
+    padding: 0;
+    overflow-y: visible;
+    background-color: transparent;
+    transition: none;
+  }
+
+  &.is-open {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.l-header__nav-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* 仕様書: SPメニュー ナビ間 41 − リンク上下余白10.5×2 */
+
+  @include mq-up(md) {
+    flex-direction: row;
+    gap: 10px; /* 中間幅: 区切り「／」なしで詰める */
+  }
+
+  @include mq-up(xl) {
+    gap: 16px; /* 仕様書: PCナビ gap16（項目と「／」が交互） */
+  }
+}
+
+.l-header__nav-item {
+  @include mq-up(md) {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.l-header__nav-item + .l-header__nav-item::before {
+  @include mq-up(xl) {
+    content: "／" / "";
+    font-size: 14px;
+    font-weight: $fw-medium;
+    color: $color-text;
+    line-height: 24px;
+  }
+}
+
+.l-header__nav-item + .l-header__nav-item .l-header__nav-link {
+  @include mq-up(xl) {
+    margin-left: 16px; /* 仕様書: 「／」→ 次の項目 16 */
+  }
+}
+
+.l-header__nav-link {
+  display: block;
+  font-size: 16px; /* 仕様書: SPメニュー ナビ 16/400/白 */
+  font-weight: $fw-normal;
+  color: $color-text-inverse;
+  line-height: 23px; /* 仕様書: SPメニュー 5行×23＋41×4＝279 → ボタン上端439 */
+  padding-block: 10.5px; /* タップ領域 23＋10.5×2＝44 → 間隔はリスト側で差し引く */
+  text-align: center;
+  white-space: nowrap;
+  transition: color 0.3s;
+
+  @include mq-up(md) {
+    padding-block: 22px; /* ボタン高68に合わせたクリック領域（24＋22×2） */
+    font-size: 14px; /* 仕様書: PCナビ 14/500/#1a1a1a/24px */
+    font-weight: $fw-medium;
+    color: $color-text;
+    line-height: 24px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+@media (any-hover: hover) {
+  .l-header__nav-link:hover {
+    @include mq-up(md) {
+      color: $color-main; /* 制作前チェック No.17: 色を変える程度 */
+    }
+  }
+}
+
+.l-header__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 32px; /* 仕様書: SPメニュー ボタン間 32 */
+  max-width: 295px; /* 仕様書: SPメニュー ボタン幅 295 */
+  margin-top: 29.5px; /* 仕様書: SPメニュー ナビ→ボタン 40 − リンク下余白10.5 */
+  margin-inline: auto;
+
+  @include mq-up(md) {
+    flex-direction: row;
+    gap: 6px; /* 中間幅: ボタン間を詰める */
+    max-width: none;
+    margin-top: 0;
+    margin-inline: 0;
+    margin-left: 12px; /* 中間幅: ナビ→ボタンを詰める */
+  }
+
+  @include mq-up(xl) {
+    gap: 10px; /* 仕様書: PCボタン間 10 */
+    margin-left: 30px; /* 仕様書: ナビ→ボタン 30 */
+  }
+}
+
+.l-header__button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 68px; /* 仕様書: ボタン高 68 */
+  font-size: 16px; /* 仕様書: SPメニュー ボタン 16/500 */
+  font-weight: $fw-medium;
+  line-height: 1.45;
+  white-space: nowrap;
+  transition: background-color 0.3s, color 0.3s;
+
+  @include mq-up(md) {
+    padding-inline: 8px; /* 中間幅: 文字幅＋8×2 */
+    font-size: 14px; /* 仕様書: PCボタン 14/500/20px */
+    line-height: 20px;
+  }
+
+  @include mq-up(xl) {
+    width: 176px; /* 仕様書: PCボタン 176×68 */
+    padding-inline: 0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 2px;
+
+    @include mq-up(md) {
+      outline-color: $color-main;
+    }
+  }
+}
+
+.l-header__button--outline {
+  border: 1px solid $color-text-inverse; /* 仕様書: SPメニュー 枠1px 白 */
+  color: $color-text-inverse;
+
+  @include mq-up(md) {
+    border-color: $color-main; /* 仕様書: PC 枠1px main・白地 */
+    color: $color-main;
+    background-color: $color-bg;
+  }
+}
+
+.l-header__button--fill {
+  color: $color-main; /* 仕様書: SPメニュー 白地・main文字 */
+  background-color: $color-bg;
+
+  @include mq-up(md) {
+    color: $color-text-inverse; /* 仕様書: PC main地・白文字 */
+    background-color: $color-main;
+  }
+}
+
+@media (any-hover: hover) {
+  .l-header__button--outline:hover {
+    @include mq-up(md) {
+      color: $color-text-inverse; /* ルールセット: 枠ボタンは背景 main・文字 白 */
+      background-color: $color-main;
+    }
+  }
+
+  .l-header__button--fill:hover {
+    @include mq-up(md) {
+      background-color: $color-main-dark; /* ルールセット: 塗りボタンは #002a52 */
+    }
+  }
+}
+
+/* ========================================
+  Main Visual
+======================================== */
+// 仕様書: artifacts/spec/mainvisual.md
+.p-mainvisual {
+  position: relative;
+  z-index: 0;
+  overflow-x: clip; /* SP 写真はカンプでも右へ1px はみ出す */
+  padding-left: 41px; /* 仕様書: SP 写真 x41 */
+
+  @include mq-up(md) {
+    padding-bottom: 150px; /* 仕様書: PC 写真700 ＋ 下150 */
+    padding-left: 90px; /* 仕様書: PC 写真 x90 */
+  }
+}
+
+.p-mainvisual__slider {
+  position: relative;
+  width: calc(100% + 1px); /* 仕様書: SP 写真 335（x41 から 376 まで） */
+  max-height: 607px; /* 仕様書: SP 写真高 607（広いSP幅では高さ固定で cover） */
+  aspect-ratio: 335 / 607; /* 仕様書: SP 写真 335×607 */
+
+  @include mq-up(md) {
+    width: auto;
+    max-height: 700px; /* 仕様書: PC 写真高 700（1280超は高さ固定で cover） */
+    aspect-ratio: 1190 / 700; /* 仕様書: PC 写真 1190×700 */
+  }
+}
+
+.p-mainvisual__slide {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+
+  &.is-active {
+    z-index: 10;
+    opacity: 1;
+  }
+}
+
+.p-mainvisual__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.p-mainvisual__title {
+  position: absolute;
+  bottom: 20px; /* 仕様書: SP サブ帯下端 587 = 写真下端607 − 20 */
+  left: 20px; /* 仕様書: SP キャッチ x20 */
+  z-index: 20;
+
+  @include mq-up(md) {
+    bottom: 210px; /* 仕様書: PC サブ帯下端 = 写真下端 − 60（150 + 60） */
+    left: 50px; /* 仕様書: PC キャッチ x50 */
+  }
+}
+
+.p-mainvisual__catch {
+  font-family: $font-en;
+  font-size: 40px; /* 仕様書: SP キャッチ 40 */
+  font-style: italic;
+  font-weight: $fw-medium;
+  color: $color-main;
+  line-height: 1.2; /* 仕様書: normal（SP 48 / PC 72） */
+
+  @include mq-up(md) {
+    font-size: clamp(40px, 4.6875vw, 60px); /* 仕様書: PC 60（60÷1280×100） */
+  }
+}
+
+.p-mainvisual__catch-row {
+  display: contents;
+
+  @include mq-up(md) {
+    display: block;
+    width: fit-content;
+    background-color: $color-bg; /* 仕様書: PC 白帯（行ごと） */
+  }
+}
+
+.p-mainvisual__catch-row + .p-mainvisual__catch-row {
+  @include mq-up(md) {
+    margin-top: 16px; /* 仕様書: PC 行間 88 − 72 */
+  }
+}
+
+.p-mainvisual__catch-word {
+  display: block;
+  width: fit-content;
+  padding-right: 1px; /* 仕様書: SP 白帯は文字幅＋1（156・145・208） */
+  background-color: $color-bg; /* 仕様書: SP 白帯（語ごと） */
+
+  @include mq-up(md) {
+    display: inline;
+    padding-right: 0;
+    background-color: transparent;
+  }
+}
+
+.p-mainvisual__catch-word + .p-mainvisual__catch-word,
+.p-mainvisual__catch-row + .p-mainvisual__catch-row .p-mainvisual__catch-word {
+  margin-top: 8px; /* 仕様書: SP 行間 56 − 48 */
+  margin-left: 1px; /* 仕様書: SP 2・3行目は x+1 */
+
+  @include mq-up(md) {
+    margin-top: 0;
+    margin-left: 0;
+  }
+}
+
+.p-mainvisual__sub {
+  width: fit-content;
+  margin-top: 16px; /* 仕様書: キャッチ下端→サブ帯 SP 176−160 / PC 176−160 */
+  padding-top: 1px; /* 仕様書: SP 文字は帯内 mt1 */
+  font-size: 16px; /* 仕様書: SP サブ 16/700 */
+  font-weight: $fw-bold;
+  color: $color-text-inverse;
+  line-height: 23px; /* 仕様書: SP 帯24 − 1 */
+  background-color: $color-main;
+
+  @include mq-up(md) {
+    padding-top: 0;
+    font-size: clamp(16px, 1.5625vw, 20px); /* 仕様書: PC サブ 20（20÷1280×100） */
+    line-height: 1.45; /* 仕様書: PC 帯29 ÷ 20 */
+  }
+}
+
+/* ========================================
+  Component: Section Title（英字見出し＋日本語見出し）
+======================================== */
+// 仕様書: artifacts/spec/about.md（hgroup-pc / hgroup-sp）
+.c-section-title {
+  font-size: 16px; /* 仕様書: SP JA 16/700 */
+  font-weight: $fw-bold;
+  color: $color-main;
+  line-height: 1.2; /* 仕様書: normal */
+  white-space: nowrap;
+
+  @include mq-up(md) {
+    font-size: clamp(16px, 1.875vw, 24px); /* 仕様書: PC JA 24（24÷1280×100） */
+    line-height: 1.21; /* 仕様書: hgroup 149 − 120 = 29（24 × 1.21） */
+  }
+
+  &::before {
+    content: attr(data-text) / "";
+    display: block;
+    font-family: $font-en;
+    font-size: 52px; /* 仕様書: SP EN 52/500 Italic */
+    font-style: italic;
+    font-weight: $fw-medium;
+    line-height: 1.19; /* 仕様書: SP hgroup 81 − 16×1.2 = 61.8（52 × 1.19） */
+
+    @include mq-up(md) {
+      font-size: clamp(52px, 7.8125vw, 100px); /* 仕様書: PC EN 100（100÷1280×100） */
+      line-height: 1.2; /* 仕様書: normal（120） */
+    }
+  }
+}
+
+/* ========================================
+  Component: View more ボタン
+======================================== */
+// 仕様書: artifacts/spec/about.md「View more 矢印」（SVG 191ff / e95d6 を円・線・矢じりで再現）
+// ::before = 円、.c-btn-more__arrow = 線（::after = 矢じり）
+.c-btn-more {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 190px; /* 仕様書: SP 190×40 */
+  height: 44px; /* タップ領域44（見た目40の上下に2ずつ） */
+  padding-top: 13px; /* 仕様書: SP 文字 top 27.5%（11）＋2 */
+  padding-right: 97px; /* 仕様書: SP 文字の右端 93（190 × (1 − 0.5105)）→ 190 − 93 */
+  font-family: $font-en;
+  font-size: 20px; /* 仕様書: SP 20/500 Italic */
+  font-style: italic;
+  font-weight: $fw-medium;
+  line-height: 1.2;
+  text-align: right;
+  white-space: nowrap;
+
+  @include mq-up(md) {
+    width: 289px; /* 仕様書: PC 289×51 */
+    height: 51px;
+    padding-top: 8px; /* 仕様書: PC 文字 top 15.69% */
+    padding-right: 140px; /* 仕様書: PC 文字の右端 149（289 × (1 − 0.4844)）→ 289 − 149 */
+    font-size: 32px; /* 仕様書: PC 32/500 Italic */
+  }
+
+  // 円
+  &::before {
+    content: "";
+    position: absolute;
+    top: 1px; /* 仕様書: SP 円 上−1＋2 */
+    left: 149px; /* 仕様書: SP 円 左149（中心170 − 21） */
+    z-index: -1;
+    width: 42px; /* 仕様書: SP 外径42・枠2 */
+    height: 42px;
+    border: 2px solid $color-accent;
+    border-radius: 50%;
+
+    @include mq-up(md) {
+      top: -1.5px; /* 仕様書: PC 円 上−1.5 */
+      left: 236.5px; /* 仕様書: PC 円 左236.5（中心263.5 − 27） */
+      width: 54px; /* 仕様書: PC 外径54・枠3 */
+      height: 54px;
+      border-width: 3px;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+  }
+}
+
+// 線
+.c-btn-more__arrow {
+  position: absolute;
+  top: 26px; /* 仕様書: SP 線 中心y25 ＋2 */
+  left: 106px; /* 仕様書: SP 線 x106 */
+  z-index: 10;
+  width: 64px; /* 仕様書: SP 線 106〜170 */
+  height: 2px;
+  background-color: currentColor;
+  transition: width 0.3s;
+
+  @include mq-up(md) {
+    top: 29px; /* 仕様書: PC 線 中心y30 */
+    left: 168px; /* 仕様書: PC 線 x168 */
+    width: 95px; /* 仕様書: PC 線 168〜263 */
+  }
+
+  // 矢じり（線の右端を起点に回転）
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    width: 16.32px; /* 仕様書: SP 矢じり (170,25)→(157.1,15) */
+    height: 2px;
+    background-color: currentColor;
+    transform: rotate(37.8deg);
+    transform-origin: right center;
+
+    @include mq-up(md) {
+      width: 16.45px; /* 仕様書: PC 矢じり (263,30)→(249.9,20) */
+      transform: rotate(37.44deg);
+    }
+  }
+}
+
+@media (any-hover: hover) {
+  .c-btn-more:hover .c-btn-more__arrow {
+    width: 100px; /* ルールセット: 矢印が右に伸びる（SP 64→100） */
+
+    @include mq-up(md) {
+      width: 146px; /* PC は SP の伸び36 × 289/190 ≒ 51 */
+    }
+  }
+}
+
+.c-btn-more--light {
+  color: $color-text-inverse; /* 仕様書: 白文字・白線 */
+}
+
+// dark: 白地用（文字・線 main、円は #fff400 の塗り）。仕様書: service.md「View more（dark）」
+.c-btn-more--dark {
+  color: $color-main;
+
+  @include mq-up(md) {
+    padding-top: 7px; /* 仕様書: PC 文字 top 13.73% */
+  }
+
+  &::before {
+    top: 2px; /* 仕様書: SP 円 上0＋2 */
+    left: 149.5px; /* 仕様書: SP 円 左149.5（中心169.5 − 20） */
+    width: 40px; /* 仕様書: SP 円 40 */
+    height: 40px;
+    border: none;
+    background-color: $color-accent;
+
+    @include mq-up(md) {
+      top: 0;
+      left: 238px; /* 仕様書: PC 円 左238（中心263.5 − 25.5） */
+      width: 51px; /* 仕様書: PC 円 51 */
+      height: 51px;
+    }
+  }
+
+  .c-btn-more__arrow {
+    left: 105px; /* 仕様書: SP 線 x105 */
+
+    @include mq-up(md) {
+      left: 168px;
+    }
+  }
+}
+
+/* ========================================
+  About（トップ）
+======================================== */
+// 仕様書: artifacts/spec/about.md
+.p-top-about {
+  position: relative;
+  z-index: 0;
+  padding-top: 60px; /* 仕様書: SP padding-top 60 */
+  padding-bottom: 135px; /* 仕様書: SP padding-bottom 135（帯の下端まで） */
+
+  @include mq-up(md) {
+    padding-top: 104px; /* 仕様書: PC 見出し上端 1054 − 950 */
+    padding-bottom: 243px; /* 仕様書: PC 写真下端1657 → 次セクション1900 */
+  }
+
+  // 斜めの帯（#edf3f8）
+  &::after {
+    content: "";
+    position: absolute;
+    top: 167px; /* 仕様書: SP 帯 y834 − 667 */
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 854px; /* 仕様書: SP 帯 854 */
+    background-color: $color-bg-sub;
+    clip-path: polygon(0 0, 100% 65.9px, 100% 100%, 0 788.1px); /* 仕様書: SP 帯 d744d.svg */
+
+    @include mq-up(md) {
+      top: 150px; /* 仕様書: PC 帯 y1100 − 950 */
+      height: 800px; /* 仕様書: PC 帯 800 */
+      clip-path: polygon(0 0, 100% 225px, 100% 100%, 0 575px); /* 仕様書: PC 帯 14562:2146 */
+    }
+  }
+
+  // 建物写真＋main 80%（PC）
+  &::before {
+    @include mq-up(md) {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: calc(50% + 140px); /* 仕様書: PC 箱 x780（1280で 640 + 140） */
+      right: 0;
+      z-index: 0;
+      height: 800px; /* 仕様書: PC 箱 500×800 */
+      background-color: $color-bg-main-tint; /* 元の建物写真は解像度不足のため平均色の塗り（2026-10-02 ユーザー承認） */
+    }
+  }
+}
+
+.p-top-about__inner {
+  position: relative;
+  z-index: 10;
+}
+
+.p-top-about__head {
+  display: flex;
+  flex-direction: column; /* 仕様書: 中間幅 section-top stack（769未満） */
+
+  @include mq-up(md) {
+    flex-direction: row; /* 仕様書: 中間幅 section-top scale ratio [0.607, 0.393] */
+    justify-content: space-between;
+    align-items: center; /* 仕様書: PC View more は見出し149の縦中央（top49） */
+  }
+}
+
+.p-top-about__more {
+  position: absolute; /* SP: 写真まわりの建物箱に重ねる */
+  right: 20px; /* 仕様書: SP View more x165〜355（375 − 165 − 190 = 20） */
+  bottom: 38px; /* 仕様書: SP View more 下端846 → セクション下端1021 − padding135 − 846 = 40（タップ領域の下2を差し引き） */
+  z-index: 20;
+
+  @include mq-up(md) {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    flex-shrink: 0;
+  }
+}
+
+.p-top-about__body {
+  display: flex;
+  flex-direction: column; /* 仕様書: 中間幅 Frame 10 stack（769未満） */
+  margin-top: 67px; /* 仕様書: SP 見出し→本文 148 − 81 */
+
+  @include mq-up(md) {
+    flex-direction: row; /* 仕様書: 中間幅 Frame 10 scale ratio [0.358, 0.642] */
+    align-items: center; /* 仕様書: PC 本文は写真426の縦中央 */
+    margin-top: 28px; /* 仕様書: PC 見出し→本文行 177 − 149 */
+  }
+}
+
+.p-top-about__text {
+  font-size: 14px; /* 仕様書: 本文 14/500/24px/#1a1a1a */
+  font-weight: $fw-medium;
+  color: $color-text;
+  line-height: 24px;
+
+  @include mq-up(md) {
+    flex: 379 1 0; /* 仕様書: PC 本文379 */
+  }
+
+}
+
+.p-top-about__text p + p {
+  margin-top: 24px; /* 仕様書: 段落間の空行 24 */
+}
+
+.p-top-about__visual {
+  position: relative;
+  z-index: 0;
+  margin-top: 30px; /* 仕様書: SP 本文下端 → 建物箱上端（1163 → 1193） */
+  padding-top: 40px; /* 仕様書: SP 建物箱上端 → 写真 40 */
+  padding-bottom: 110px; /* 仕様書: SP 写真下端 → 建物箱下端（360 − 40 − 210） */
+
+  @include mq-up(md) {
+    flex: 681 1 0; /* 仕様書: PC 写真681 */
+    margin-top: 0;
+    margin-left: 40px; /* 仕様書: PC 本文→写真 40 */
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  // 建物写真＋main 80%（SP）
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 60px; /* 仕様書: SP 箱 x80 − 20 */
+    right: -20px; /* 仕様書: SP 箱は画面右端まで（295） */
+    z-index: -1;
+    height: 360px; /* 仕様書: SP 箱 295×360 */
+    background-image: linear-gradient($color-overlay-main, $color-overlay-main), url("../images/common/bg-building.jpg");
+    background-image: linear-gradient($color-overlay-main, $color-overlay-main), image-set(url("../images/common/bg-building.webp") type("image/webp"), url("../images/common/bg-building.jpg") type("image/jpeg"));
+    background-position: center;
+    background-size: cover;
+
+    @include mq-up(md) {
+      content: none;
+    }
+  }
+}
+
+.p-top-about__img {
+  width: 100%;
+  aspect-ratio: 335 / 210; /* 仕様書: SP 写真 335×210 */
+  object-fit: cover;
+  object-position: top;
+
+  @include mq-up(md) {
+    aspect-ratio: 681 / 426; /* 仕様書: PC 写真 681×426 */
+  }
+}
+
+/* ========================================
+  Service（トップ）
+======================================== */
+// 仕様書: artifacts/spec/service.md
+.p-top-service {
+  position: relative;
+  z-index: 0;
+  padding-top: 60px; /* 仕様書: SP padding-top 60 */
+  padding-bottom: 168px; /* 仕様書: SP セクション高2419 − 内容2251（60＋81＋12＋2029＋29＋40） */
+
+  @include mq-up(md) {
+    padding-top: 119px; /* 仕様書: PC padding-top 119 */
+    padding-bottom: 109px; /* 仕様書: PC padding-bottom 109 */
+  }
+
+  // 斜めの帯（#edf3f8）
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 60px; /* 仕様書: SP 帯は下から60 */
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 1178px; /* 仕様書: SP 帯 1178 */
+    background-color: $color-bg-sub;
+    clip-path: polygon(0 0, 100% 61.9px, 100% 100%, 0 1116.1px); /* 仕様書: SP 帯 0e42d.svg */
+
+    @include mq-up(md) {
+      top: 564px; /* 仕様書: PC 帯 service 上端 + 564 */
+      bottom: auto;
+      height: 800px; /* 仕様書: PC 帯 800 */
+      clip-path: polygon(0 0, 100% 225px, 100% 100%, 0 575px); /* 仕様書: PC 帯 5dd05.svg */
+    }
+  }
+}
+
+.p-top-service__inner {
+  position: relative;
+  z-index: 10;
+  padding-bottom: 69px; /* 仕様書: SP カード → 29 → View more 40（View more は下端に置く） */
+
+  @include mq-up(md) {
+    padding-bottom: 0;
+  }
+}
+
+.p-top-service__head {
+  display: flex;
+  flex-direction: column; /* 仕様書: 中間幅 section-top stack（769未満） */
+
+  @include mq-up(md) {
+    flex-direction: row; /* 仕様書: 中間幅 section-top scale ratio [0.555, 0.445] */
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.p-top-service__more {
+  position: absolute; /* SP: カードの下・右寄せ */
+  right: 20px; /* 仕様書: SP 右寄せ（inner の padding 20） */
+  bottom: -2px; /* SP: タップ領域44の下2をはみ出させ、見た目40の位置を保つ */
+  width: 189.5px; /* 仕様書: SP dark 189.5×40 */
+
+  @include mq-up(md) {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    flex-shrink: 0;
+    width: 289px;
+  }
+}
+
+.p-top-service__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(282px, 1fr)); /* 仕様書: 中間幅 grid min_card=282 gap=38 */
+  row-gap: 18px; /* 仕様書: SP カード間 18 */
+  column-gap: 38px; /* 仕様書: PC カード間 390 − 352 */
+  margin-top: 12px; /* 仕様書: SP 見出し → カード 12 */
+
+  @include mq-up(md) {
+    width: calc(100% + 32px); /* 仕様書: PC カード列は x −32 から 1132 */
+    margin-top: 30px; /* 仕様書: PC 見出し行 → カード 30 */
+    margin-left: -32px;
+    row-gap: 60px;
+  }
+}
+
+.p-top-service__card {
+  position: relative;
+  z-index: 0;
+
+  // 番号（装飾。白い影付き）
+  &::before {
+    content: attr(data-num) / "";
+    position: absolute;
+    top: 0;
+    right: 4px; /* 仕様書: 番号の右端 = カード右端 − 影4 */
+    z-index: 20;
+    font-family: $font-en;
+    font-size: 100px; /* 仕様書: 番号 100/500 Italic */
+    font-style: italic;
+    font-weight: $fw-medium;
+    color: $color-main;
+    line-height: 1.2;
+    text-shadow: 4px 3px 0 $color-text-inverse; /* 仕様書: SP 白の影 4,3 */
+
+    @include mq-up(md) {
+      text-shadow: 4px 4px 0 $color-text-inverse; /* 仕様書: PC 白の影 4,4 */
+    }
+  }
+}
+
+.p-top-service__card:nth-child(2) {
+  @include mq-up(cols3) {
+    margin-top: 59px; /* 仕様書: PC 2枚目 +59（3列のとき） */
+  }
+}
+
+.p-top-service__card:nth-child(3) {
+  @include mq-up(cols3) {
+    margin-top: 119px; /* 仕様書: PC 3枚目 +119（3列のとき） */
+  }
+}
+
+.p-top-service__visual {
+  position: relative;
+  z-index: 10;
+  padding-top: 55px; /* 仕様書: 写真の上端 55 */
+  padding-left: 15px; /* 仕様書: SP 写真 x15 */
+
+  @include mq-up(md) {
+    padding-left: 32px; /* 仕様書: PC 写真 x32 */
+  }
+}
+
+.p-top-service__card:nth-child(2) .p-top-service__visual {
+  padding-top: 57px; /* 仕様書: SP 2枚目 写真の上端 57 */
+
+  @include mq-up(md) {
+    padding-top: 56px; /* 仕様書: PC 2枚目 写真の上端 56 */
+  }
+}
+
+.p-top-service__card:nth-child(3) .p-top-service__visual {
+  padding-top: 54px; /* 仕様書: SP 3枚目 写真の上端 54 */
+
+  @include mq-up(md) {
+    padding-top: 56px; /* 仕様書: PC 3枚目 写真の上端 56 */
+  }
+}
+
+.p-top-service__img {
+  width: 100%;
+  aspect-ratio: 320 / 427; /* 仕様書: 写真 320×427 */
+  object-fit: cover;
+}
+
+.p-top-service__title {
+  position: absolute;
+  bottom: 33px; /* 仕様書: タイトル帯の下端 = 写真下端 − 33 */
+  left: 0;
+  z-index: 10;
+  font-size: 28px; /* 仕様書: タイトル 28/700/main */
+  font-weight: $fw-bold;
+  color: $color-main;
+  line-height: 41px; /* 仕様書: 帯の高さ 41 */
+}
+
+.p-top-service__title-row {
+  display: block;
+  width: fit-content;
+  background-color: $color-bg; /* 仕様書: 行ごとの白帯 */
+  white-space: nowrap;
+}
+
+.p-top-service__title-row + .p-top-service__title-row {
+  margin-top: 8px; /* 仕様書: 帯の行間 49 − 41 */
+}
+
+.p-top-service__text {
+  margin-top: 14px; /* 仕様書: 写真下端 → 本文 496 − 482 */
+  padding-left: 15px; /* 仕様書: SP 本文 x15 */
+  font-size: 14px; /* 仕様書: 本文 14/500/24px/#1a1a1a */
+  font-weight: $fw-medium;
+  color: $color-text;
+  line-height: 24px;
+
+  @include mq-up(md) {
+    padding-left: 32px; /* 仕様書: PC 本文 x32 */
+  }
+}
+
+.c-section-title--light {
+  color: $color-text-inverse; /* 仕様書: 暗い背景の見出しは白 */
+}
+
+/* ========================================
+  Case Study（トップ）
+======================================== */
+// 仕様書: artifacts/spec/case-study.md
+.p-top-case {
+  position: relative;
+  z-index: 10; /* 背景を次のセクションへ6px重ねるため前面に */
+  padding-top: 60px; /* 仕様書: SP 見出し y60 */
+  padding-bottom: 60px; /* 仕様書: SP View more 下 60 */
+
+  @include mq-up(md) {
+    padding-top: 100px; /* 仕様書: PC padding-top 100 */
+    padding-bottom: 122px; /* 仕様書: PC padding-bottom 122 */
+  }
+
+  // 建物写真＋main 80%
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    background-color: $color-bg-main-tint; /* 元の建物写真は解像度不足のため平均色の塗り（2026-10-02 ユーザー承認） */
+
+    @include mq-up(md) {
+      height: calc(100% + 6px); /* 仕様書: PC 背景 1173（セクション1167より6px長い） */
+    }
+  }
+}
+
+.p-top-case__inner {
+  position: relative;
+  padding-bottom: 93px; /* 仕様書: SP カード → 53 → View more 40 */
+
+  @include mq-up(md) {
+    padding-bottom: 0;
+  }
+}
+
+.p-top-case__head {
+  display: flex;
+  flex-direction: column; /* 仕様書: 中間幅 section-top stack（769未満） */
+
+  @include mq-up(md) {
+    flex-direction: row; /* 仕様書: 中間幅 section-top scale ratio [0.648, 0.352] */
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.p-top-case__more {
+  position: absolute; /* SP: カードの下（x165〜355） */
+  right: 20px; /* 仕様書: SP View more x165（375 − 165 − 190 = 20） */
+  bottom: -2px; /* SP: タップ領域44の下2をはみ出させ、見た目40の位置を保つ */
+
+  @include mq-up(md) {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    flex-shrink: 0;
+  }
+}
+
+.p-top-case__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* 監督決定: 1280で320×3（(1100 − 70×2) ÷ 3） */
+  gap: 48px; /* 仕様書: SP カード間 48 */
+  margin-top: 47px; /* 仕様書: SP 見出し → カード 188 − 141 */
+
+  @include mq-up(md) {
+    gap: 70px; /* 仕様書: PC カード間 70（縦横） */
+    margin-top: 80px; /* 仕様書: PC 見出し行 → カード 80 */
+  }
+}
+
+.p-top-case__card {
+  display: block;
+  color: $color-text-inverse;
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 4px;
+  }
+}
+
+.p-top-case__logo {
+  display: grid;
+  place-items: center; /* 仕様書: ロゴ 200×200 は箱の中央 */
+  aspect-ratio: 335 / 251; /* 仕様書: SP 白い箱 335×251 */
+  background-color: $color-bg;
+
+  @include mq-up(md) {
+    aspect-ratio: 320 / 240; /* 仕様書: PC 白い箱 320×240 */
+  }
+}
+
+.p-top-case__logo-img {
+  width: 200px; /* 仕様書: ロゴ 200×200 */
+}
+
+.p-top-case__name {
+  margin-top: 14px; /* 仕様書: 箱 → 会社名 14 */
+  font-size: 16px; /* 仕様書: 会社名 16/700/白 */
+  font-weight: $fw-bold;
+  color: $color-text-inverse;
+  line-height: 23px; /* 仕様書: normal（23） */
+}
+
+.p-top-case__meta {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px; /* 仕様書: 会社名 → タグ 14 */
+
+  // 矢印アイコン（円＋シェブロン）
+  &::after {
+    content: "";
+    flex-shrink: 0;
+    width: 30px; /* 仕様書: 矢印アイコン 30×30 */
+    height: 30px;
+    background-color: $color-text-inverse;
+    mask-image: url("../images/common/icon-arrow-circle.svg");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+}
+
+.p-top-case__tag {
+  padding-block: 5px; /* 仕様書: タグ padding 6/16（Figma の枠は内側。枠1px分を引く） */
+  padding-inline: 15px;
+  border: 1px solid $color-text-inverse; /* 仕様書: タグ 枠1px 白 */
+  font-size: 14px; /* 仕様書: タグ 14/700/白 */
+  font-weight: $fw-bold;
+  color: $color-text-inverse;
+  line-height: 20px; /* 仕様書: normal（20）→ タグ高32 */
+  white-space: nowrap;
+}
+
+@media (any-hover: hover) {
+  .p-top-case__card:hover .p-top-case__meta::after {
+    background-color: $color-accent; /* ルールセット: 矢印アイコンが黄色に */
+    transform: translateX(10px); /* ルールセット: 右へ10px */
+  }
+}
+
+/* ========================================
+  News（トップ）
+======================================== */
+// 仕様書: artifacts/spec/news.md
+.p-top-news {
+  position: relative;
+  z-index: 0;
+  padding-top: 60px; /* 仕様書: SP 見出し y60 */
+  padding-bottom: 189px; /* 仕様書: SP セクション高857 − 内容668（3件目の行高差3pxは統一） */
+
+  @include mq-up(md) {
+    padding-top: 165px; /* 仕様書: PC padding-top 165 */
+    padding-bottom: 160px; /* 仕様書: PC padding-bottom 160 */
+  }
+
+  // 斜めの帯（#edf3f8）
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 100px; /* 仕様書: SP 帯は下から100 */
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 580px; /* 仕様書: SP 帯 580 */
+    background-color: $color-bg-sub;
+    clip-path: polygon(0 0, 100% 58.19px, 100% 100%, 0 521.81px); /* 仕様書: SP 帯 47895.svg */
+
+    @include mq-up(md) {
+      bottom: -89px; /* 仕様書: PC 帯はセクション下端より89下まで（フッターの下に隠れる） */
+      height: 640px; /* 仕様書: PC 帯 640 */
+      clip-path: polygon(0 0, 100% 225px, 100% 100%, 0 415px); /* 仕様書: PC 帯 9dfc1.svg */
+    }
+  }
+}
+
+.p-top-news__inner {
+  position: relative;
+  padding-bottom: 72px; /* 仕様書: SP カード → 32 → View more 40 */
+
+  @include mq-up(md) {
+    padding-bottom: 0;
+  }
+}
+
+.p-top-news__head {
+  display: flex;
+  flex-direction: column; /* 仕様書: 中間幅 section-top stack（769未満） */
+
+  @include mq-up(md) {
+    flex-direction: row; /* 仕様書: 中間幅 section-top scale ratio [0.47, 0.53] */
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.p-top-news__more {
+  position: absolute; /* SP: カードの下・右寄せ */
+  right: 20px; /* 仕様書: SP 右寄せ（inner の padding 20） */
+  bottom: -2px; /* SP: タップ領域44の下2をはみ出させ、見た目40の位置を保つ */
+  width: 189.5px; /* 仕様書: SP dark 189.5×40 */
+
+  @include mq-up(md) {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    flex-shrink: 0;
+    width: 289px;
+  }
+}
+
+.p-top-news__box {
+  max-width: 768px; /* 仕様書: PC カード 768 */
+  margin-top: 60px; /* 仕様書: SP 見出し → カード 60 */
+  margin-inline: auto;
+  padding-block: 40px; /* 仕様書: SP padding 40/20 */
+  padding-inline: 20px;
+  background-color: $color-bg;
+  box-shadow: 0 3px 6px $color-shadow; /* 仕様書: 影 0 3 6 rgba(0,0,0,.16) */
+
+  @include mq-up(md) {
+    margin-top: 80px; /* 仕様書: PC 見出し行 → カード 80 */
+    padding-top: 60px; /* 仕様書: PC padding 60/40/40 */
+    padding-bottom: 40px;
+    padding-inline: 40px;
+  }
+}
+
+.p-top-news__item {
+  border-bottom: 1px solid $color-border; /* 仕様書: 記事の下線 1px #ddd */
+}
+
+.p-top-news__link {
+  display: block;
+  padding-top: 16px; /* 仕様書: SP 2・3件目 上16 */
+  padding-bottom: 31px; /* 仕様書: 下31 */
+
+  @include mq-up(md) {
+    padding-top: 25px; /* 仕様書: PC 上25 */
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-main;
+    outline-offset: 2px;
+  }
+}
+
+.p-top-news__item:first-child .p-top-news__link {
+  padding-top: 0; /* 仕様書: SP 1件目 上0 */
+
+  @include mq-up(md) {
+    padding-top: 25px;
+  }
+}
+
+.p-top-news__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.p-top-news__tag {
+  padding-block: 5px; /* 仕様書: SP タグ padding 6/20（枠は内側） */
+  padding-inline: 19px;
+  border: 1px solid $color-required; /* 仕様書: タグ 枠1px #e61264 */
+  font-size: 12px; /* 仕様書: SP タグ 12/500 */
+  font-weight: $fw-medium;
+  color: $color-required;
+  line-height: 1.2;
+  white-space: nowrap;
+
+  @include mq-up(md) {
+    padding-block: 7px; /* 仕様書: PC タグ padding 8/24（枠は内側） */
+    padding-inline: 23px;
+    font-size: 14px; /* 仕様書: PC タグ 14/500 */
+  }
+}
+
+.p-top-news__date {
+  font-size: 14px; /* 仕様書: 日付 14/500 */
+  font-weight: $fw-medium;
+  color: $color-text-sub; /* 仕様書: #888 → #707070（No.14） */
+  line-height: 1.2;
+}
+
+.p-top-news__title {
+  display: block;
+  margin-top: 20px; /* 仕様書: タグ行 → タイトル 20 */
+  overflow: hidden;
+  font-size: 14px; /* 仕様書: SP タイトル 14/700 */
+  font-weight: $fw-bold;
+  color: $color-text;
+  line-height: 16px; /* 仕様書: SP 1件 94 − 26 − 20 − 31 − 1 = 16（PNG実測） */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.3s;
+
+  @include mq-up(md) {
+    max-width: 648px; /* 仕様書: PC タイトル幅 648 */
+    font-size: 16px; /* 仕様書: PC タイトル 16/700 */
+    line-height: 18px; /* 仕様書: PC 1件 128 − 25 − 33 − 20 − 31 − 1 = 18（PNG実測） */
+  }
+}
+
+@media (any-hover: hover) {
+  .p-top-news__link:hover .p-top-news__title {
+    color: $color-main; /* 制作前チェック No.17: 色を変える程度 */
+  }
+}
+
+/* ========================================
+  Footer
+======================================== */
+// 仕様書: artifacts/spec/footer.md
+.l-footer {
+  position: relative;
+  z-index: 20; /* NEWS の帯（下へ89px）より前面 */
+}
+
+.l-footer__cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* 仕様書: 中間幅 footer-button stack（769未満） */
+
+  @include mq-up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* 仕様書: 中間幅 footer-button scale ratio [0.5, 0.5] */
+  }
+}
+
+.l-footer__cta-item {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 265px; /* 仕様書: SP CTA 375×265 */
+  padding-top: 35px; /* 仕様書: SP 英字タイトル 上35 */
+  overflow: hidden;
+  color: $color-text-inverse;
+
+  @include mq-up(md) {
+    height: 340px; /* 仕様書: PC CTA 640×340 */
+    padding-top: 52px; /* 仕様書: PC 英字タイトル 上52 */
+  }
+
+  // 背景写真
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -20;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    transition: transform 0.5s;
+  }
+
+  // 青の重ね
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $color-accent;
+    outline-offset: -6px;
+  }
+}
+
+.l-footer__cta-item--download {
+  &::before {
+    background-image: url("../images/footer/footer-01.jpg");
+    background-image: image-set(url("../images/footer/footer-01.webp") type("image/webp"), url("../images/footer/footer-01.jpg") type("image/jpeg"));
+  }
+
+  &::after {
+    background-color: $color-cta-download; /* 仕様書: rgba(0,87,172,.8)（SPも No.13 で統一） */
+  }
+}
+
+.l-footer__cta-item--contact {
+  &::before {
+    background-image: url("../images/footer/footer-02.jpg");
+    background-image: image-set(url("../images/footer/footer-02.webp") type("image/webp"), url("../images/footer/footer-02.jpg") type("image/jpeg"));
+    background-position: 50% 43%; /* 仕様書: SP 117.15%・top −4.51% */
+    background-size: 117.15% auto;
+
+    @include mq-up(md) {
+      background-position: 50% 33%; /* 仕様書: PC 110.52%・top −12.76% */
+      background-size: 110.52% auto;
+    }
+  }
+
+  &::after {
+    background-color: $color-cta-contact; /* 仕様書: rgba(2,62,120,.8) */
+  }
+}
+
+.l-footer__cta-title {
+  font-family: $font-en;
+  font-size: 40px; /* 仕様書: SP 英字 40/500 Italic */
+  font-style: italic;
+  font-weight: $fw-medium;
+  color: $color-text-inverse;
+  line-height: 1.2;
+  text-transform: uppercase;
+
+  @include mq-up(md) {
+    font-size: 60px; /* 仕様書: PC 英字 60 */
+  }
+}
+
+.l-footer__cta-sub {
+  margin-top: 6px; /* 仕様書: SP 英字下端83 → 日本語89 / PC 124 → 130 */
+  font-size: 16px; /* 仕様書: 日本語 16/700 */
+  font-weight: $fw-bold;
+  color: $color-text-inverse;
+  line-height: 23px; /* 仕様書: 高さ23 */
+}
+
+.l-footer__cta-button {
+  position: relative;
+  display: block;
+  width: calc(100% - 80px); /* 仕様書: SP ボタン 295（左右40） */
+  max-width: 315px; /* 仕様書: PC ボタン 315 */
+  height: 77px; /* 仕様書: SP ボタン高 77 */
+  margin-top: 40px; /* 仕様書: SP 日本語下端112 → ボタン152 */
+  padding-top: 27px; /* 仕様書: SP View more はボタン上端+29（枠2を含む） */
+  border: 2px solid $color-accent; /* 仕様書: SP 枠2 */
+  font-family: $font-en;
+  font-size: 16px; /* 仕様書: SP View more 16/500 Italic */
+  font-style: italic;
+  font-weight: $fw-medium;
+  color: $color-accent;
+  line-height: 1.2;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s;
+
+  @include mq-up(md) {
+    height: 98px; /* 仕様書: PC ボタン 315×98 */
+    margin-top: 37px; /* 仕様書: PC 日本語下端153 → ボタン190 */
+    padding-top: 31px; /* 仕様書: PC View more はボタン上端+34（枠3を含む） */
+    border-width: 3px; /* 仕様書: PC 枠3 */
+    font-size: 24px; /* 仕様書: PC View more 24 */
+  }
+
+  // 矢印
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 18px; /* 仕様書: SP 矢印右端 = ボタン右端−20（枠2の内側） */
+    width: 20px; /* 仕様書: 矢印 20×14 */
+    height: 14px;
+    background-color: $color-accent;
+    mask-image: url("../images/common/icon-arrow-right.svg");
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    transform: translateY(-50%);
+    transition: background-color 0.3s, transform 0.3s;
+
+    @include mq-up(md) {
+      right: 29px; /* 仕様書: PC 矢印右端 = ボタン右端−32（枠3の内側） */
+    }
+  }
+}
+
+@media (any-hover: hover) {
+  .l-footer__cta-item:hover::before {
+    transform: scale(1.1); /* ルールセット: 背景写真が拡大 */
+  }
+
+  .l-footer__cta-item:hover .l-footer__cta-button {
+    color: $color-text; /* ルールセット: 塗り #fff400・文字 #1a1a1a */
+    background-color: $color-accent;
+  }
+
+  .l-footer__cta-item:hover .l-footer__cta-button::after {
+    background-color: $color-main; /* ルールセット: 矢印は main 色で右へ */
+    transform: translate(8px, -50%);
+  }
+}
+
+.l-footer__body {
+  position: relative;
+  padding-top: 70.5px; /* 仕様書: SP ロゴ 上77 − リンク上余白6.5 */
+  padding-bottom: 15px; /* 仕様書: SP 下余白16（コピーライト14pxで行が2.4高い分を差し引き） */
+  background-color: $color-bg-dark;
+  text-align: center;
+
+  @include mq-up(md) {
+    padding-top: 127px; /* 仕様書: PC ロゴ 上129 − リンク上余白2 */
+    padding-bottom: 17px; /* 仕様書: PC 下余白17 */
+  }
+}
+
+.l-footer__logo {
+  font-size: 0;
+  line-height: 1;
+}
+
+.l-footer__logo-link {
+  display: inline-block;
+  padding-block: 6.5px; /* タップ領域 31＋6.5×2＝44 */
+  margin-left: 3px; /* 仕様書: ロゴのインク中心は中央+1.5（SP 50〜328 → 189 / PC 461〜822 → 641.5） */
+
+  @include mq-up(md) {
+    padding-block: 2px; /* クリック領域 40＋2×2＝44 */
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-text-inverse;
+    outline-offset: 2px;
+  }
+}
+
+.l-footer__logo-img {
+  width: 279px; /* 仕様書: SP ロゴ 279×31 */
+
+  @include mq-up(md) {
+    width: 362px; /* 仕様書: PC ロゴ 362×40（52px） */
+  }
+}
+
+.l-footer__address {
+  display: block;
+  width: fit-content;
+  margin-top: 24.5px; /* 仕様書: SP ロゴ下 → 住所 31 − リンク下余白6.5 */
+  margin-inline: auto;
+  font-size: 14px; /* 仕様書: 住所 14/500/24px/白 */
+  font-style: normal;
+  font-weight: $fw-medium;
+  color: $color-text-inverse;
+  line-height: 24px;
+  text-align: left;
+
+  @include mq-up(md) {
+    margin-top: 32px; /* 仕様書: PC ロゴ下 → 住所 34 − リンク下余白2 */
+  }
+}
+
+.l-footer__copyright {
+  margin-top: 37px; /* 仕様書: SP 住所下 → コピーライト 38（14pxにした分の行の高さ差を差し引き） */
+  font-size: 14px; /* 仕様書: SP コピーライト 12 → 中間幅検査の最小14に合わせる */
+  font-weight: $fw-medium;
+  color: $color-text-inverse;
+  line-height: 1.2;
+
+  @include mq-up(md) {
+    margin-top: 76px; /* 仕様書: PC 住所下 → コピーライト 76 */
+    line-height: 24px; /* 仕様書: PC コピーライト 14/24px */
+  }
+}
+
+.l-footer__copyright small {
+  font-size: inherit;
+}
+
+.l-footer__pagetop {
+  position: absolute;
+  top: 217px; /* 仕様書: SP ページトップ 上219（タップ領域44の中央に40を置く −2） */
+  right: 8px; /* 仕様書: SP 右10 − 2 */
+  z-index: 10;
+  width: 44px; /* タップ領域44（アイコンは40×40） */
+  height: 44px;
+  background-color: $color-text-inverse;
+  mask-image: url("../images/common/icon-pagetop.svg");
+  mask-size: 40px 40px; /* 仕様書: アイコン 40×40 */
+  mask-repeat: no-repeat;
+  mask-position: center;
+  transition: background-color 0.3s;
+
+  @include mq-up(md) {
+    top: 310px; /* 仕様書: PC ページトップ 上312 − 2 */
+    right: 18px; /* 仕様書: PC 右20 − 2 */
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-accent;
+    outline-offset: 2px;
+  }
+}
+
+@media (any-hover: hover) {
+  .l-footer__pagetop:hover {
+    background-color: $color-accent; /* 制作前チェック No.17: 色を変える程度 */
+  }
+}
